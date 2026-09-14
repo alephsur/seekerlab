@@ -1,6 +1,7 @@
 import {createContext, type ReactNode, useContext, useEffect, useMemo, useState} from 'react';
-import {fromUint8Array, useMobileWallet} from '@wallet-ui/react-native-kit';
+import {useMobileWallet} from '@wallet-ui/react-native-kit';
 import {config} from '../../config';
+import {encodeEd25519SignatureForApi, encodeSiwsMessageForApi} from './siwsEncoding';
 import {
   AuthRequestError,
   getCurrentIdentity,
@@ -71,8 +72,10 @@ export function AuthProvider({children}: {children: ReactNode}) {
       const session = await verifyChallenge({
         nonce: challenge.nonce,
         account: {address: output.account.address},
-        signedMessage: fromUint8Array(output.signedMessage),
-        signature: fromUint8Array(output.signature),
+        signedMessage: encodeSiwsMessageForApi(
+          output.signedMessage, challenge, output.account.address,
+        ),
+        signature: encodeEd25519SignatureForApi(output.signature),
         signatureType: 'ed25519',
       });
       setIdentity(session.identity);

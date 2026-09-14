@@ -10,7 +10,8 @@
     "start": "expo start --dev-client",
     "android": "expo run:android",
     "prebuild": "expo prebuild --platform android",
-    "check": "tsc --noEmit",
+    "check": "tsc --noEmit && npm run test:siws",
+    "test:siws": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/siws-encoding.test.mjs",
     "doctor": "npx expo-doctor",
     "export:android": "expo export --platform android"
   },
