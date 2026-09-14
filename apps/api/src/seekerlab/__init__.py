@@ -1,0 +1,1 @@
+"""SeekerLab modular monolith."""

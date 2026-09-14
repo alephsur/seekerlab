@@ -1,0 +1,54 @@
+name: checks
+on: [push, pull_request]
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: seekerlab
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: seekerlab_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U seekerlab -d seekerlab_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e '.[dev]'
+      - run: ruff check src tests migrations
+      - run: pytest -q
+      - name: Check migration round trip on PostgreSQL
+        env:
+          DATABASE_URL: postgresql+psycopg://seekerlab:ci-only-password@localhost:5432/seekerlab_test
+          APP_ENV: test
+        run: |
+          alembic upgrade head
+          python -m seekerlab.seed
+          python -m seekerlab.seed
+          alembic check
+          alembic downgrade base
+          alembic upgrade head
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm run check
+      - run: npx expo install --check
+      - run: npm run export:android

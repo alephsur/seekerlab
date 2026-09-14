@@ -1,0 +1,13 @@
+{
+  "title": "Prueba el registro de mi dApp",
+  "description": "Necesitamos detectar los pasos del registro que resultan confusos para un usuario nuevo.",
+  "instructions": [
+    "Abre la aplicación de prueba",
+    "Completa el registro con los datos de ensayo indicados",
+    "Describe un problema concreto y lo que esperabas que ocurriera"
+  ],
+  "reward_amount": "3.00",
+  "currency": "USDC",
+  "estimated_minutes": 5,
+  "capacity": 20
+}

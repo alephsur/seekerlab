@@ -1,0 +1,44 @@
+@baseUrl = http://localhost:8000
+@builderToken = REPLACE_WITH_DEV_BUILDER_TOKEN
+@testerToken = REPLACE_WITH_DEV_TESTER_TOKEN
+@campaignId = 11111111-1111-4111-8111-111111111111
+
+### Estado
+GET {{baseUrl}}/health/ready
+
+### Campañas
+GET {{baseUrl}}/api/v1/campaigns
+
+### Crear campaña
+POST {{baseUrl}}/api/v1/campaigns
+Authorization: Bearer {{builderToken}}
+Content-Type: application/json
+
+{
+  "title": "Prueba el onboarding",
+  "description": "Encuentra un punto de confusión en el recorrido inicial.",
+  "instructions": ["Abre la aplicación", "Describe una mejora concreta"],
+  "reward_amount": "3.00",
+  "currency": "USDC",
+  "estimated_minutes": 5,
+  "capacity": 20
+}
+
+### Entregar feedback (solo una vez por campaña y tester)
+POST {{baseUrl}}/api/v1/campaigns/{{campaignId}}/submissions
+Authorization: Bearer {{testerToken}}
+Content-Type: application/json
+
+{"feedback": "Al abrir la campaña no encontraba las instrucciones. Las mostraría encima del importe de recompensa."}
+
+### Mis entregas
+GET {{baseUrl}}/api/v1/submissions/me
+Authorization: Bearer {{testerToken}}
+
+### Entregas de una campaña: solo propietario
+GET {{baseUrl}}/api/v1/campaigns/{{campaignId}}/submissions
+Authorization: Bearer {{builderToken}}
+
+### Cerrar campaña
+POST {{baseUrl}}/api/v1/campaigns/{{campaignId}}/close
+Authorization: Bearer {{builderToken}}
