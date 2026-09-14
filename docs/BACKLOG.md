@@ -2,14 +2,16 @@
 
 ## 1. Verifiable identity
 
-- Create an SIWS challenge with a unique nonce, domain, URI, and expiration.
-- Verify the Ed25519 signature on the server and consume the nonce atomically.
-- Issue sessions and support renewal and revocation.
-- Use the session instead of static tokens in the client.
-- Test reused and expired nonces, invalid signatures, and wallet changes.
+- [x] Create an SIWS challenge with a unique nonce, domain, URI, and expiration.
+- [x] Verify the Ed25519 signature on the server and consume the nonce atomically.
+- [x] Issue sessions and support renewal and revocation.
+- [x] Use the session instead of static tokens in the client.
+- [x] Test reused and expired nonces, invalid signatures, and wallet changes.
+- [ ] Exercise the complete MWA/SIWS flow on a real device with a controlled HTTPS domain.
 
 Acceptance: connecting a wallet and authenticating a session are explicit steps;
-no one can impersonate another address through a field sent to the backend.
+no one can impersonate another address through a field sent to the backend. Automated
+acceptance is complete; device acceptance remains pending.
 
 ## 2. Seeker eligibility
 

@@ -43,12 +43,13 @@ def main() -> None:
     write_new(ROOT / "apps/api/.env", "\n".join([
         "APP_ENV=development", f"DATABASE_URL={url}", "DEV_AUTH_ENABLED=true",
         f"DEV_BUILDER_TOKEN={values['DEV_BUILDER_TOKEN']}",
-        f"DEV_TESTER_TOKEN={values['DEV_TESTER_TOKEN']}", "CORS_ORIGINS=[]", "",
+        f"DEV_TESTER_TOKEN={values['DEV_TESTER_TOKEN']}", "CORS_ORIGINS=[]",
+        f"SIWS_DOMAIN={values.get('SIWS_DOMAIN', 'localhost:8000')}",
+        f"SIWS_URI={values.get('SIWS_URI', 'http://localhost:8000')}", "",
     ]))
     write_new(ROOT / "apps/mobile/.env", "\n".join([
         f"EXPO_PUBLIC_API_URL=http://10.0.2.2:{values.get('API_PORT', '8000')}",
         f"EXPO_PUBLIC_DATA_MODE={args.data_mode}",
-        f"EXPO_PUBLIC_DEV_TESTER_TOKEN={values['DEV_TESTER_TOKEN']}",
         "EXPO_PUBLIC_WALLET_IDENTITY_URI=", "",
     ]))
     print("Ready. Next: make up, make mobile-install, make android.")

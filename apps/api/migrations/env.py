@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, pool
 from seekerlab.config import get_settings
 from seekerlab.db import Base
 from seekerlab.modules.campaigns import models  # noqa: F401
+from seekerlab.modules.identity import models as identity_models  # noqa: F401
 
 target_metadata = Base.metadata
 

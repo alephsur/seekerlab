@@ -7,6 +7,8 @@ x-api-environment: &api-environment
   DEV_BUILDER_TOKEN: ${DEV_BUILDER_TOKEN:-}
   DEV_TESTER_TOKEN: ${DEV_TESTER_TOKEN:-}
   CORS_ORIGINS: '[]'
+  SIWS_DOMAIN: ${SIWS_DOMAIN:-localhost:8000}
+  SIWS_URI: ${SIWS_URI:-http://localhost:8000}
 
 services:
   db:

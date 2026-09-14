@@ -10,7 +10,7 @@ introducing queues, microservices, or a CQRS framework before they are needed.
 | Module | Current responsibility | Next integration |
 | --- | --- | --- |
 | campaigns | Campaigns and text submissions | Acceptance/rejection, attachments, and budget |
-| identity | Two local identities separated by role | SIWS, sessions, and SGT |
+| identity | SIWS tester identities and sessions; local builder identity | SGT and real developer identities |
 | analysis | `FeedbackAnalyzer` port | Evidence-backed LLM analysis and background execution |
 | payments | `PaymentVerifier` port | Mobile transaction construction and backend RPC verification |
 
@@ -33,10 +33,16 @@ not be reused to construct transfers.
 
 ## Identity and network
 
-The included MWA integration connects the app to a wallet on devnet and does not sign payments.
-The API does not yet accept a wallet as an identity. Sending an address is not enough:
-SIWS must verify a signature, domain, URI, single-use nonce, expiration, and audience
-before issuing a session.
+The MWA integration connects the app to a wallet on devnet and does not sign payments.
+Wallet connection and backend authentication are explicit, separate user actions. The
+API issues a short-lived SIWS challenge bound to its configured domain, URI, chain, and
+expiration. It verifies the exact canonical message and Ed25519 signature before
+atomically consuming the nonce and issuing opaque access and rotating refresh tokens.
+Only token hashes are stored. Mobile session material is stored with Expo SecureStore.
+
+SIWS identities currently receive the tester role. The local builder token is still
+available only when development authentication is enabled; production rejects that mode.
+Real developer enrollment and authorization belong to the campaigns increment.
 
 The real SGT resides on mainnet. Its verification will be a read operation independent
 of test transactions on devnet. Verification must check a nonzero balance, the mint
@@ -56,6 +62,7 @@ APK or publishing certificate is included. The configuration allows HTTP for loc
 development; `APP_VARIANT=production` disables cleartext traffic, but this alone does
 not turn the foundation into a production-ready application.
 
-Pending requirements include SIWS, sessions, identity-based authorization, SGT,
-payment verification, rate limits, a privacy policy, evidence management, and testing
-on a real Seeker device. The API rejects combining `APP_ENV=production` with local authentication.
+Pending requirements include SGT, real developer authorization, payment verification,
+rate limits, a privacy policy, evidence management, and testing SIWS on a real Seeker
+device and controlled domain. The API rejects combining `APP_ENV=production` with local
+authentication or an insecure SIWS URI.

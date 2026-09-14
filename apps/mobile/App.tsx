@@ -8,6 +8,7 @@ import {CampaignDetail} from './src/features/campaigns/CampaignDetail';
 import {SubmissionsScreen} from './src/features/submissions/SubmissionsScreen';
 import {WalletProvider} from './src/features/wallet/WalletProvider';
 import {WalletScreen} from './src/features/wallet/WalletScreen';
+import {useAuth} from './src/features/auth/AuthProvider';
 import {colors} from './src/theme';
 
 type Tab = 'campaigns' | 'submissions' | 'wallet';
@@ -16,6 +17,7 @@ const tabs: {key: Tab; label: string}[] = [
 ];
 
 function Shell() {
+  const {identity} = useAuth();
   const [tab, setTab] = useState<Tab>('campaigns');
   const [selected, setSelected] = useState<Campaign | null>(null);
   useEffect(() => {
@@ -30,8 +32,10 @@ function Shell() {
   return <SafeAreaView style={styles.safe}>
     <StatusBar barStyle="light-content"/>
     <View style={styles.header}><View style={styles.brand}><Text style={styles.mark}>S</Text><Text style={styles.wordmark}>SeekerLab<Text style={{color: colors.accent}}>.</Text></Text></View>
-      <Text style={styles.version}>0.1 / DEV</Text></View>
-    <View style={styles.banner}><Text style={styles.bannerText}>{config.dataMode === 'demo' ? 'DEMO LOCAL · datos en memoria · sin pagos' : 'DESARROLLO · usuario local · sin pagos'}</Text></View>
+      <Text style={styles.version}>0.2 / DEV</Text></View>
+    <View style={styles.banner}><Text style={styles.bannerText}>{config.dataMode === 'demo'
+      ? 'DEMO LOCAL · datos en memoria · sin pagos'
+      : identity ? 'SESIÓN SIWS · sin pagos' : 'DESARROLLO · autentica tu wallet · sin pagos'}</Text></View>
     <KeyboardAvoidingView style={{flex: 1}}>
       {selected ? <CampaignDetail key={selected.id} campaign={selected} onBack={() => setSelected(null)} onSubmitted={() => {setSelected(null); setTab('submissions');}}/> :
         tab === 'campaigns' ? <CampaignsScreen onSelect={setSelected}/> : tab === 'submissions' ? <SubmissionsScreen/> : <WalletScreen/>}

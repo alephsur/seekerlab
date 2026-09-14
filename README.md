@@ -45,14 +45,14 @@ For physical devices, occupied ports, and development without Docker, see the
 | Rules | Validation, one submission per campaign/user, capacity, and closed-campaign blocking |
 | Database | Initial migration, indexes, uniqueness, persistent volume, and idempotent seed data |
 | Mobile app | Browse, search, read instructions, submit observations, and view history |
-| Wallet | MWA connect/disconnect code on devnet; requires a controlled domain and a compatible wallet |
-| API authentication | Two local users with development tokens; disabled in production |
-| SGT, SIWS, payments, and AI | Integration contracts and tasks defined; implementations pending |
+| Wallet | Explicit MWA connection and SIWS authentication on devnet; requires a controlled domain and a compatible wallet |
+| API authentication | One-use SIWS challenges, Ed25519 verification, renewable/revocable tester sessions, and local builder authentication |
+| SGT, payments, and AI | Integration contracts and tasks defined; implementations pending |
 | Attachments and recording | Pending; the initial flow uses text |
 | Developer dashboard | Swagger and HTTP examples; a dedicated interface is pending |
 
-The connected wallet is **not yet the identity used for API requests**.
-API mode uses `local-tester`. SIWS must replace this access method before onboarding real users.
+In API mode, tester requests use the SIWS session issued for the connected wallet.
+The development builder token remains local-only until real developer identities are added.
 
 ## Project structure
 
@@ -61,7 +61,7 @@ API mode uses `local-tester`. SIWS must replace this access method before onboar
 | `apps/mobile` | Expo application and npm dependencies locked in `package-lock.json` |
 | `apps/mobile/src/features` | Campaigns, submissions, and wallet |
 | `apps/api/src/seekerlab/modules/campaigns` | Rules, use cases, repository, models, and schemas |
-| `apps/api/src/seekerlab/modules/identity` | Local authentication and the SGT verification port |
+| `apps/api/src/seekerlab/modules/identity` | SIWS authentication, sessions, local builder authentication, and the SGT verification port |
 | `apps/api/src/seekerlab/modules/analysis` | Contract for future feedback analysis |
 | `apps/api/src/seekerlab/modules/payments` | Payment verification contract |
 | `apps/api/migrations` | Alembic migration history |
@@ -95,9 +95,11 @@ a full reload. An API failure never enables this mode automatically.
 
 ## Enable wallet connection
 
-1. Set `EXPO_PUBLIC_WALLET_IDENTITY_URI` to an HTTPS domain you control.
+1. Set `EXPO_PUBLIC_WALLET_IDENTITY_URI` to an HTTPS domain you control. Set the API's
+   `SIWS_URI` to the same value and `SIWS_DOMAIN` to its authority.
 2. Restart Metro and install an MWA-compatible wallet on the test Android device.
-3. Open Wallet → Connect wallet. The network is fixed to **devnet**.
+3. Open Wallet → Connect wallet, then select Authenticate with wallet. The network is
+   fixed to **devnet** and authentication does not authorize a payment.
 
 App identity validation may require Digital Asset Links on the domain.
 The package name `com.seekerlab.app` is provisional: change it before publishing and
@@ -106,17 +108,18 @@ or remote repository has been registered.
 
 ## Continue development
 
-The recommended next increment is **complete SIWS and real SGT verification**.
+The recommended next increment is **real SGT verification**, after exercising SIWS on
+a compatible wallet and controlled domain.
 The [initial backlog](docs/BACKLOG.md) defines the acceptance criteria.
 
 Campaign reward amounts are advertised values serialized as decimal strings.
 They are not atomic units and do not prove that a budget has been deposited.
-Never place private keys, private RPC endpoints, or backend tokens in `EXPO_PUBLIC_*`.
-The tester token included there is deliberately public and valid only for local development.
+Never place private keys, private RPC endpoints, session material, or backend tokens in
+`EXPO_PUBLIC_*`. Local development tokens stay in the root and API environments; the
+mobile application does not read them.
 
-Python dependencies have bounded ranges in `pyproject.toml`. Their lockfile still needs
-to be generated and validated in an environment with PyPI access; full backend
-reproducibility is not guaranteed until those dependencies and container images are pinned.
+Python dependencies are resolved in `apps/api/uv.lock`; CI and the development container
+install from that lockfile. Update it deliberately with `uv lock` after dependency changes.
 
 ## Official references
 

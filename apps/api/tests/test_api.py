@@ -65,4 +65,4 @@ def test_development_authentication_refuses_production():
 def test_disabled_authentication_does_not_accept_dev_tokens(client, tester_headers):
     from seekerlab.config import get_settings
     client.app.dependency_overrides[get_settings] = lambda: Settings(dev_auth_enabled=False)
-    assert client.get("/api/v1/submissions/me", headers=tester_headers).status_code == 503
+    assert client.get("/api/v1/submissions/me", headers=tester_headers).status_code == 401

@@ -46,6 +46,25 @@ npm start -- --localhost
 The ADB tunnel allows the API to remain bound to localhost. If you change the API port,
 update both ends of `adb reverse` and the Expo URL.
 
+## SIWS configuration
+
+SIWS requires one HTTPS identity URI that you control. Configure the same identity in
+the root/API environment and the mobile environment:
+
+```dotenv
+# Root .env and apps/api/.env
+SIWS_DOMAIN=app.example.com
+SIWS_URI=https://app.example.com
+
+# apps/mobile/.env
+EXPO_PUBLIC_WALLET_IDENTITY_URI=https://app.example.com
+```
+
+`SIWS_DOMAIN` is the URI authority, including a non-default port if one exists. The API
+refuses a mismatch and production refuses a non-HTTPS URI. The mobile app also refuses
+to sign when the challenge URI differs from its configured wallet identity. Connecting
+selects a wallet account; authenticating is a separate button and signature prompt.
+
 ## Device over Wi-Fi
 
 With the computer and device on the same network, set `API_BIND_HOST=0.0.0.0` in the
@@ -56,18 +75,16 @@ equivalent to the product's final authentication system.
 
 ## Backend without a container
 
-Keep PostgreSQL in Docker and run Python in a virtual environment:
+Install `uv`, keep PostgreSQL in Docker, and run Python in the locked project environment:
 
 ```bash
 make setup
 docker compose up -d db
 cd apps/api
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-alembic upgrade head
-python -m seekerlab.seed
-uvicorn seekerlab.main:app --reload --host 127.0.0.1 --port 8000
+uv sync --locked --all-extras
+uv run alembic upgrade head
+uv run python -m seekerlab.seed
+uv run uvicorn seekerlab.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 `apps/api/.env` contains the PostgreSQL URL for localhost. The container uses the
@@ -80,9 +97,8 @@ After modifying models:
 
 ```bash
 cd apps/api
-source .venv/bin/activate
-alembic revision --autogenerate -m "describe change"
-alembic upgrade head
+uv run alembic revision --autogenerate -m "describe change"
+uv run alembic upgrade head
 ```
 
 Review the SQL and downgrade path before applying a migration to important data.
@@ -93,7 +109,8 @@ with `make up`. Changes under `src` are reloaded through the development volume.
 
 Open `/docs` and select Authorize. Enter the `DEV_BUILDER_TOKEN` value from your `.env`
 in the Bearer field to create or close campaigns and review their submissions.
-Use `DEV_TESTER_TOKEN` to submit feedback and view local history.
+For direct local HTTP testing only, use `DEV_TESTER_TOKEN` to submit feedback and view
+local history. The mobile application always uses its SIWS session.
 The role is not accepted in the request body.
 Complete examples are available in `examples/api.http`.
 
@@ -103,10 +120,11 @@ Complete examples are available in `examples/api.http`.
 | --- | --- |
 | Network request failed | Run `make smoke`; check the emulator URL `10.0.2.2`, ADB tunnel, or Wi-Fi IP |
 | Port 5432/8000 already in use | Change root `DB_PORT`/`API_PORT` and the URLs in the generated `.env` files |
-| 401 on submissions | The public tester token must match the API's `DEV_TESTER_TOKEN` |
+| 401 in direct local HTTP tests | The bearer token must match the API's `DEV_TESTER_TOKEN` |
 | 403 when creating a campaign | Use the builder token, not the tester token |
 | 409 when submitting | You already submitted to that campaign, it is closed, or no slots remain |
-| 503 on private routes | Development authentication is disabled; SIWS is not implemented yet |
+| 401 on tester routes | Connect and authenticate the wallet, or renew the expired session |
+| SIWS URI mismatch | Make `SIWS_URI` and `EXPO_PUBLIC_WALLET_IDENTITY_URI` identical |
 | No campaigns | Run `make seed`; the seed does not reopen closed campaigns |
 | Wallet not found | Install an MWA-compatible Android wallet and configure your own domain |
 | Native module error | Use `make android`; rebuild after changing native dependencies |

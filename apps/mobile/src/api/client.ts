@@ -1,19 +1,33 @@
 import {config} from '../config';
 import {demoApi} from './demo';
 import type {Campaign, Submission} from './types';
+import {loadSession, renewSession} from '../features/auth/session';
 
 async function request<T>(path: string, options: RequestInit = {}, authenticated = false): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
   try {
-    const response = await fetch(`${config.apiUrl}/api/v1${path}`, {
+    let session = authenticated ? await loadSession() : null;
+    if (authenticated && !session) throw new Error('Autentica tu wallet para continuar.');
+    let response = await fetch(`${config.apiUrl}/api/v1${path}`, {
       ...options,
       signal: controller.signal,
       headers: {
         ...(options.body ? {'Content-Type': 'application/json'} : {}),
-        ...(authenticated ? {Authorization: `Bearer ${config.devTesterToken}`} : {}),
+        ...(session ? {Authorization: `Bearer ${session.accessToken}`} : {}),
       },
     });
+    if (authenticated && response.status === 401) {
+      session = await renewSession(session?.accessToken);
+      response = await fetch(`${config.apiUrl}/api/v1${path}`, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          ...(options.body ? {'Content-Type': 'application/json'} : {}),
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+    }
     if (!response.ok) {
       const body: unknown = await response.json().catch(() => null);
       const detail = body && typeof body === 'object' && 'detail' in body ? body.detail : null;
